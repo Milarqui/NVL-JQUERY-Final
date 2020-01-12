@@ -1,0 +1,240 @@
+Memoria Final
+Juego de Tres en Raya
+
+1. Introducción
+
+El principal objetivo de este módulo de pre-work es aprender a usar jQuery dentro de un documento HTML junto con CSS y con otras funciones JavaScript.
+
+Para este proyecto, se va a crear un juego de tres en raya que pueda controlarse mediante el ratón, en el que pinchando sobre las celdas de una tabla se introduzcan símbolos alternativos correspondientes a un jugador y a otro, y que compruebe en todo momento si se ha producido un vencedor. También existe un botón que permite reiniciar el juego, y se han añadido efectos para que el juego tenga una apariencia más interesante.
+
+A lo largo de la presente memoria, se mostrará el proyecto desarrollado, se identificarán los elementos clave y se terminará con una conclusión sobre el ejercicio.
+
+2. Procedimiento
+2.1. Documento HTML
+La sección del documento HTML es muy simple, ya que solo contiene tres elementos: un botón que reinicia el juego, la tabla que actuará como tablero de juego y un párrafo en el que se mostrarán los mensajes que se produzcan.
+  <div>
+   <button id="BtnReset">¡Empieza de nuevo!</button>
+  </div>
+  <div>
+   <table>
+    <tr>
+     <td></td>
+     <td></td>
+     <td></td>
+    </tr>
+    <tr>
+     <td></td>
+     <td></td>
+     <td></td>
+    </tr>
+    <tr>
+     <td></td>
+     <td></td>
+     <td></td>
+    </tr>
+   </table>
+  </div>
+  <br/>
+  <p><span id="Messages"></span></p>
+
+2.2. Estilo CSS
+
+El estilo CSS se ha construido para dar un estilo inicial a todas las celdas, de forma que pueda verse el tablero desde el principio, además de asignar ciertas características importantes a las celdas una vez cambien.
+
+   td {
+    id: empty;
+    text-align: center;
+    alignment: center;
+    font-size: 0px;
+    border: 2px groove;
+   }
+Este estilo es común a todas las celdas, de forma que, independientemente de los cambios que se produzcan, siempre tendrán dichas características.
+
+   td, img {
+    height: 60px;
+    width: 60px;
+   }
+Este estilo fija las alturas de todas las imágenes y celdas, para que no cambien de tamaño.
+
+   img {
+    display: none;
+   }
+Con este estilo, las imágenes no se mostrarán al principio.
+
+   td.chosen {
+    border-color: red
+   }
+   td.unchosen {
+    border-color: black;
+   }
+Este estilo cambia el borde de la celda dependiendo de si ha sido escogida o no
+
+   #empty {
+    background-color: white;
+   }
+   #Cruz{
+    background-color: lightblue;
+   }
+   #Cero{
+    background-color: lightgreen;
+   }
+Según el símbolo de la celda (vacía, cruz o cero) el fondo de la celda cambiará de color.
+
+   #Messages {
+    font-size: 30px;
+    display: none;
+   }
+Aquí se fija el tamaño de la fuente del párrafo con los mensajes y se hace display = none para que no se vea.
+
+2.3. Script JS/jQuery
+El motor del juego se encuentra en el script de JavaScript/jQuery, el cual se muestra a continuación.
+
+   function linea( arr){ 
+    var sample = arr[0];
+    var equal = arr.every((item) => item === sample);
+    return {s: sample, e: equal};
+   }
+Esta función permite comprobar si todos los elementos de un array son iguales.
+
+   var ids = {
+    false: "Cero",
+    true: "Cruz"
+   }
+   var vals = {
+    false: 'https://4.bp.blogspot.com/-lAdMcA1HQAo/V3EJojq41mI/AAAAAAAAAEM/JB_eejaFJbADTbVYAS0jT2yCDXIsSlJhgCLcB/s1600/o.png',
+    true: 'https://1.bp.blogspot.com/-warn9-JgQnw/V3EJnsUQA2I/AAAAAAAAAEE/oOJkX6vnzEUBxcZdbuaVp_EHjD3kuNZkACLcB/s1600/x.png'
+   }
+Estas variables se utilizan en el programa. Contienen la asignación de nueva clase y la dirección del símbolo correspondiente.
+
+   $( document ).ready(function() {
+    var cross = true;
+    var win = false;          //Indicador de si ha terminado la partida
+Se empieza jugando con cruces y se indica que se está jugando (no hay vencedor).
+
+    $( 'td' ).attr("id","empty");
+    $( 'td' ).addClass("unchosen");
+    $( 'td' ).each(function(){
+     irow = $( this ).parent( 'tr' ).index();
+     icol = $( this ).index();
+     $( this ).addClass("r"+irow.toString());
+     $( this ).addClass("c"+icol.toString());
+     if(irow == icol){
+      $( this ).addClass("d0");
+      if(irow == 1){
+       $( this ).addClass("d1");
+      }
+     }
+     if(Math.abs(irow-icol)==2){
+      $( this ).addClass("d1");
+     }
+    });
+    $( 'td' ).html("<img>");
+Se inician las celdas para que estén en su estado inicial, además de asignarles las clases correspondientes a la fila, columna y diagonal en la que cada una de ellas se encuentra.
+
+    function check_victory(){
+     result = false;
+     winner = null;
+     var clas = [".r",".c",".d"]; //Los tres tipos de línea (fila, columna y diagonal)
+     var nums = ["0","1","2"];    //Y valores asociados
+     $.each(clas,function(ic,vc){ //Para cada tipo de línea
+      $.each(nums,function(it,vt){//Y cada número
+       var ff = vc+vt;
+       if(ff === ".d2"){
+        return(false);
+       }
+       var fil = $( ff ).map(function() {
+        return this.id;
+       }).get();
+       if($.inArray("empty",fil)==-1){
+        res = linea(fil);
+        if(res["e"]){
+         result=res["e"];
+         winner=res["s"];
+        }
+       }
+      });
+     });
+     return {win: result, w: winner}; //Devuelve si se ha producido la victoria y el ganador
+    }
+Esta función se usa para mirar las celdas y comprobar si hay línea. Para ello, usa las clases de fila, columna y diagonal para seleccionar las celdas asignadas a cada una de ellas y obtiene los IDs de dichas celdas. Si ninguna está "empty" (ya hay pieza en ellas), comprueba si son iguales. Si lo son, devuelve el resultado de victoria y el vencedor.
+
+    $( 'td' ).on('mouseover', function() {
+     $( this ).removeClass('unchosen');
+     $( this ).addClass('chosen');
+    });
+    $( 'td' ).on('mouseleave', function() {
+     $( this ).addClass('unchosen');
+     $( this ).removeClass('chosen');
+    });
+Cuando el ratón pasa sobre una celda, queda resaltada, y pierde el resalte al salir de ella.
+
+    $( 'td' ).on('click', function() {
+Al pinchar sobre una celda, se activa la lógica de juego.
+
+     if(!win){                                     //Si el juego sigue
+      var sq = $( this );
+      var cls = sq.attr("id");                     //Determina la celda
+      if(cls == "empty"){                          //Si está vacía, cambia la imagen y clase por la correspondiente
+       sq.children("img").attr("src",vals[cross]);
+       sq.children("img").fadeIn(500);
+       sq.attr("id",ids[cross]);
+       cross = !cross;
+      }
+Si el juego continúa, se comprueba el estado de la celda pinchada. Si está vacía, se asigna la información de la imagen correspondiente al jugador.
+
+      var result = check_victory();
+      win = result["win"]
+      if(win){
+       winner = result["w"];
+       $( "#Messages" ).html("¡Gana "+winner+"!");
+       $( "#Messages" ).css({
+        "color": "gold",
+        "background-color": "blue"
+       });
+       $( "#Messages" ).fadeIn(1000);
+      }
+Se comprueba si hay vencedor. Si lo hay, el párrafo del mensaje cambia para indicar quién es el ganador.
+
+      else if($('td[id="empty"]' ).length == 0){
+       $( "#Messages" ).html("¡Empate, no hay vencedor!");//Mensaje de final
+       $( "#Messages" ).css({
+        "color": "red",
+        "background-color": "lightblue"
+       });
+       $( "#Messages" ).fadeIn(1000);
+       win = true;                                        //Y termina el juego
+      }
+     }
+Si no hay vencedor y todas las celdas han sido asignadas (ninguna de ellas es "empty"), se indica que hay empate y se cambia el mensaje para indicarlo, además de terminar el juego.
+
+     else {
+      $( "#Messages" ).fadeOut(500,function() {
+       $( "#Messages" ).html("¡Fin del juego, deja de pinchar!");
+       $( "#Messages" ).css({
+        "color": "green",
+        "background-color": "orange"
+       });
+       $( "#Messages" ).fadeIn(500);
+      });
+     }
+    });
+Si ha terminado el juego (win == true) entonces al pinchar sobre una celda el mensaje cambiará para indicar a los jugadores que el juego ha terminado.
+
+    $( "#BtnReset" ).on("click",function() {
+     $( '#Messages' ).fadeOut(100,function() {
+      $( 'td' ).attr("id","empty");
+      $( "img" ).fadeOut(100);
+      win = false;
+      cross = true;
+     });
+    });
+   });
+Finalmente, con esta función se reinicializa el juego, haciendo que desaparezcan las imágenes y el mensaje y devolviendo a los controles del juego (win y cross) su estado inicial.
+
+3. Conclusión
+
+Este programa ha pasado por varios retoques de gran calado para poder hacerlo más simple. Al principio, la comprobación de la victoria no se hacía por función, sino por una serie de instrucciones que miraban las columnas, las filas y las diagonales por separado, ya que no se estaba explotando la capacidad de las clases al máximo. Sin embargo, una revisión permitió aligerar la carga del programa y su capacidad de reutilización, usando múltiples clases para asignar los grupos de celdas que forman cada línea y usando la función each para moverme sobre todas las clases y usar la misma función sobre ellos. Asimismo, el uso de la función para comprobar que todos los elementos de un array son iguales permite una mayor modularidad, que podría ser usada en el futuro para otros programas de índole similar.
+
+Es un programa relativamente complejo y largo de realizar, pero esto se ha debido principalmente a mi relativa falta de experiencia con el lenguaje de programación JavaScript/jQuery. Una vez he resuelto las dudas que tenía, he podido asignar bien todos los elementos que quería, tal y como quería. Además, he podido incluir en el programa tres de los objetivos adicionales indicados en el enunciado (uso de efectos y símbolos, botón de reseteo y texto en pantalla), y otro de ellos (cambiar el símbolo) sólo ha fallado por un problema que no he logrado detectar aún, pero seguramente lo encontraré en el futuro.
+
+El resultado final es un juego de tres en raya sencillo de usar y claro en cómo funciona.
