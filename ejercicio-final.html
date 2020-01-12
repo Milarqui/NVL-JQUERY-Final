@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html>
+ <head>
+  <meta charset="utf-8">
+  <title>Noughts-and-Crosses</title>
+  <style>
+   td {                 //Estilo común a todas las celdas
+    id: empty;
+    text-align: center;
+    alignment: center;
+    font-size: 0px;
+    border: 2px groove;
+   }
+   td, img {            //Las celdas tienen el mismo tamaño que las imágenes
+    height: 60px;
+    width: 60px;
+   }
+   img {                //Inicialmente, las imágenes no se muestran
+    display: none;
+   }
+   td.chosen {          //La celda escogida
+    border-color: red
+   }
+   td.unchosen {        //Las celdas no escogidas
+    border-color: black;
+   }
+   #empty {             //Si no se ha pinchado en la celda
+    background-color: white;
+   }
+   #Cruz{               //Esta y la siguiente son para cuando se ha pinchado en la celda
+    background-color: lightblue;
+   }
+   #Cero{
+    background-color: lightgreen;
+   }
+   #Messages {         //Se fija el tamaño de los mensajes y no se muestra
+    font-size: 30px;
+    display: none;
+   }
+  </style>
+ </head>
+ <body>
+  <script src="https://code.jquery.com/jquery-3.3.1.js"></script>
+  <script>
+   function linea( arr){ //Esta función lee todos los elementos de un array y devuelve equal = true si son todos iguales
+    var sample = arr[0];
+    var equal = arr.every((item) => item === sample);
+    return {s: sample, e: equal};
+   }
+   var ids = {           //Los tres siguientes son valores usados dentro del script
+    false: "Cero",
+    true: "Cruz"
+   }
+   var vals = {
+    false: 'https://4.bp.blogspot.com/-lAdMcA1HQAo/V3EJojq41mI/AAAAAAAAAEM/JB_eejaFJbADTbVYAS0jT2yCDXIsSlJhgCLcB/s1600/o.png',
+    true: 'https://1.bp.blogspot.com/-warn9-JgQnw/V3EJnsUQA2I/AAAAAAAAAEE/oOJkX6vnzEUBxcZdbuaVp_EHjD3kuNZkACLcB/s1600/x.png'
+   }
+   $( document ).ready(function() {
+    var cross = true;         //Se empieza jugando con cruces
+    var win = false;          //Indicador de si ha terminado la partida
+    $( 'td' ).attr("id","empty");//Se inician todas las celdas a "empty"
+    $( 'td' ).addClass("unchosen");//Se añade la clase "unchosen" a todas las celdas
+    $( 'td' ).each(function(){               //Se añade a todas las celdas la clase que indica su fila, columna y diagonal
+     irow = $( this ).parent( 'tr' ).index();
+     icol = $( this ).index();
+     $( this ).addClass("r"+irow.toString());
+     $( this ).addClass("c"+icol.toString());
+     if(irow == icol){
+      $( this ).addClass("d0");
+      if(irow == 1){
+       $( this ).addClass("d1");
+      }
+     }
+     if(Math.abs(irow-icol)==2){
+      $( this ).addClass("d1");
+     }
+    });
+    $( 'td' ).html("<img>"); //Da a todas las celdas una imagen vacía
+    function check_victory(){ //Esta función chequea las casillas para ver si se ha formado una línea
+     result = false;
+     winner = null;
+     var clas = [".r",".c",".d"]; //Los tres tipos de línea (fila, columna y diagonal)
+     var nums = ["0","1","2"];    //Y valores asociados
+     $.each(clas,function(ic,vc){ //Para cada tipo de línea
+      $.each(nums,function(it,vt){//Y cada número
+       var ff = vc+vt;
+       if(ff === ".d2"){          //".d2" no existe, por lo que saltamos esta función
+        return(false);
+       }
+       var fil = $( ff ).map(function() { //Obtiene los ID de los elementos de la línea
+        return this.id;
+       }).get();
+       if($.inArray("empty",fil)==-1){ //Si ningún ID es "empty", comprueba que hay 3 en raya
+        res = linea(fil);
+        if(res["e"]){
+         result=res["e"];
+         winner=res["s"];
+        }
+       }
+      });
+     });
+     return {win: result, w: winner}; //Devuelve si se ha producido la victoria y el ganador
+    }
+    $( 'td' ).on('mouseover', function() {//Si el ratón pasa sobre una celda, cambia la clase "unchosen" por "chosen"
+     $( this ).removeClass('unchosen');
+     $( this ).addClass('chosen');
+    });
+    $( 'td' ).on('mouseleave', function() {//Si el ratón sale de una celda, cambia la clase "chosen" por "unchosen"
+     $( this ).addClass('unchosen');
+     $( this ).removeClass('chosen');
+    });
+    $( 'td' ).on('click', function() {             //Si se pincha sobre una celda
+     if(!win){                                     //Si el juego sigue
+      var sq = $( this );
+      var cls = sq.attr("id");                     //Determina la celda
+      if(cls == "empty"){                          //Si está vacía, cambia la imagen y clase por la correspondiente
+       sq.children("img").attr("src",vals[cross]);
+       sq.children("img").fadeIn(500);
+       sq.attr("id",ids[cross]);
+       cross = !cross;
+      }
+      var result = check_victory(); //Comprueba si hay vencedor
+      win = result["win"]
+      if(win){            //Si hay vencedor, mensaje de felicitación y termina el juego
+       winner = result["w"];
+       $( "#Messages" ).html("¡Gana "+winner+"!");
+       $( "#Messages" ).css({
+        "color": "gold",
+        "background-color": "blue"
+       });
+       $( "#Messages" ).fadeIn(1000);
+      }
+      else if($('td[id="empty"]' ).length == 0){ //Si se llenan todas las casillas y no hay vencedor
+       $( "#Messages" ).html("¡Empate, no hay vencedor!");//Mensaje de final
+       $( "#Messages" ).css({
+        "color": "red",
+        "background-color": "lightblue"
+       });
+       $( "#Messages" ).fadeIn(1000);
+       win = true;                                        //Y termina el juego
+      }
+     }
+     else {                                               //Si ya ha terminado el juego
+      $( "#Messages" ).fadeOut(500,function() {           //Mensaje de advertencia
+       $( "#Messages" ).html("¡Fin del juego, deja de pinchar!");
+       $( "#Messages" ).css({
+        "color": "green",
+        "background-color": "orange"
+       });
+       $( "#Messages" ).fadeIn(500);
+      });
+     }
+    });
+    $( "#BtnReset" ).on("click",function() { //Se inicializa todo al pulsar el botón
+     $( '#Messages' ).fadeOut(100,function() {
+      $( 'td' ).attr("id","empty");
+      $( "img" ).fadeOut(100);
+      win = false;
+      cross = true;
+     });
+    });
+   });
+  </script>
+  <div>
+   <button id="BtnReset">¡Empieza de nuevo!</button>
+  </div>
+  <div>
+   <table>
+    <tr>
+     <td></td>
+     <td></td>
+     <td></td>
+    </tr>
+    <tr>
+     <td></td>
+     <td></td>
+     <td></td>
+    </tr>
+    <tr>
+     <td></td>
+     <td></td>
+     <td></td>
+    </tr>
+   </table>
+  </div>
+  <br/>
+  <p><span id="Messages"></span></p>
+ </body>
+</html>
